@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>webgl</title>
+</head>
+<body onload="main()">
+  <canvas id="glcanvas">
+    你的浏览器似乎不支持或者禁用了 HTML5 <code>&lt;canvas&gt;</code> 元素。
+  </canvas>
+</body>
+<style>
+  body{
+    padding: 0;
+    margin: 0;
+  }
+</style>
+<script src="./lib/initShader.js"></script>
+<script>
+  function main() {
+    const canvas = document.querySelector("#glcanvas");
+    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+    // 初始化 WebGL 上下文
+    const gl = canvas.getContext("webgl");
+    // 着色器就是让开发者自己去编写一段程序，用来代替固定的渲染管线，来处理图像的渲染。
+    // 顶点着色器：用来描述顶点的特性，通过计算获取位置信息。（顶点指二维三维空间中的一个点，可以理解为一个坐标点）。
+    // 片元着色器：进行逐片元处理程序，通过计算获取颜色信息。（片元可以理解为一个一个像素）。
+
+    // 创建着色器源码
+    // 顶点着色器
+    const VERTEX_SHADER_SOURCES = `
+      // void main 函数必须存在，相当于入口函数;
+      void main(){
+        // 要绘制的坐标（x,y,z,w） w指齐次坐标  => x/w, y/w, z/w
+        gl_Position = vec4(0.0,0.0,0.0,1.0);
+        // 点的大小
+        gl_PointSize =30.0;
+      }
+    `;
+
+    // 片元着色器
+    const FRAGMENT_SHADER_SOURCES = `
+      void main(){
+        // 当前要绘制的点的颜色 (r,g,b,a)
+        gl_FragColor = vec4(1.0,0.0,0.0,1.0);
+      }
+    `;
+    initShader(gl, VERTEX_SHADER_SOURCES, FRAGMENT_SHADER_SOURCES);
+    
+    // 执行绘制
+    // 1. 要绘制的图形是什么 2. 从哪个开始（下标）  3. 使用几个顶点
+    // POINTS 点  
+    // LINES 线段 需要两个顶点
+    // TRIANGLES 三角形  需要三个顶点
+    gl.drawArrays(gl.POINTS, 0, 1);
+  }
+</script>
+</html>
