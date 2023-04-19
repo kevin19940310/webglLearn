@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>webgl</title>
+</head>
+<body onload="main()">
+  <canvas id="glcanvas">
+    你的浏览器似乎不支持或者禁用了 HTML5 <code>&lt;canvas&gt;</code> 元素。
+  </canvas>
+</body>
+<style>
+  body{
+    padding: 0;
+    margin: 0;
+  }
+  #glcanvas{
+    background-color: gray;
+  }
+  body::after{
+    content: '';
+    display: block;
+    width: 0.5px;
+    height: 100%;
+    background-color: red;
+    position: absolute;
+    top: 0;
+    left: 50%;
+  }
+  body::before{
+    content: '';
+    display: block;
+    width: 100%;
+    height: 0.5px;
+    background-color: red;
+    position: absolute;
+    top: 50%;
+    left: 0;
+  }
+</style>
+<script src="./lib/initShader.js"></script>
+<script>
+  function main() {
+    const canvas = document.querySelector("#glcanvas");
+    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+    // 初始化 WebGL 上下文
+    const gl = canvas.getContext("webgl");
+
+    // 创建着色器源码
+    // 顶点着色器
+    const VERTEX_SHADER_SOURCES = `
+      //attribute 只传递顶点数据
+      attribute vec4 aPosition;
+      attribute vec4 aTex;
+      varying vec2 vTex;
+      void main(){
+        gl_Position = aPosition;
+        vTex = vec2(aTex.x, aTex.y);
+      }
+    `;
+
+    // 片元着色器
+    const FRAGMENT_SHADER_SOURCES = `
+      precision lowp float;
+      // 2D纹理
+      uniform sampler2D uSampler;
+      // 立方体纹理
+      // uniform samplerCube uSamplerCube;
+      varying vec2 vTex;
+      void main(){
+        gl_FragColor = texture2D(uSampler, vTex);
+      }
+    `;
+    const program = initShader(gl, VERTEX_SHADER_SOURCES, FRAGMENT_SHADER_SOURCES);
+    // 获取 aPosition变量的内存地址
+    const aPosition = gl.getAttribLocation(program, 'aPosition');
+    const aTex = gl.getAttribLocation(program, 'aTex');
+    const uSampler = gl.getUniformLocation(program, 'uSampler');
+    const points = new Float32Array([
+      -0.5, 0.5, 0.0, 1.0,
+      -0.5, -0.5, 0.0, 0.0,
+      0.5, 0.5, 1.0, 1.0,
+      0.5, -0.5, 1.0, 0.0,
+    ])
+    // 创建缓冲区对象
+    const buffer = gl.createBuffer();
+    const BYTES = points.BYTES_PER_ELEMENT;
+    gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
+
+    gl.vertexAttribPointer(aPosition,2, gl.FLOAT, false, BYTES * 4, 0);
+    gl.enableVertexAttribArray(aPosition);
+
+    gl.vertexAttribPointer(aTex,2, gl.FLOAT, false, BYTES * 4, BYTES * 2);
+    gl.enableVertexAttribArray(aTex);
+
+    const img = new Image();
+    img.onload = function() {
+      // 创建纹理对象
+      const texture = gl.createTexture();
+      //翻转图片y轴
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+      // 开启一个纹理单元
+      gl.activeTexture(gl.TEXTURE0);
+      // 绑定纹理对象 gl.TEXTURE_2D 二维纹理  gl.TEXTURE_CUBE_MAP 立方体纹理
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+
+      // 处理放大缩小的逻辑 
+      // 第一次参数 type 同上
+      // 第二个参数 gl.TEXTURE_MAG_FILTER 放大 ， gl.TEXTURE_MIN_FILTER 缩小， gl.TEXTURE_WRAP_S， 横向填充 gl.TEXTURE_WRAP_T 纵向填充
+      // 第三个参数 ：赋值给放大缩小的 => gl.NEAREST 使用像素颜色值 ，gl.LINEAR 使用四周的加权平均值；赋值给水平或纵向填充的 => gl.REPEAT 平铺重复， gl.MIRRORED_REPEAT 镜像对称，gl.CLAMP_TO_EDGE 边缘延伸
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+      // 处理横向纵向平铺的方式
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      // 配置纹理图像
+      // 第一个参数 type 同上
+      // 第二个参数 level 固定 0
+      // 第三个参数 internalformat 图像的内部格式 gl.RGB gl.RGBA gl.ALPHA gl.LUMINANCE 使用物体表面的红绿蓝分量的加权平均值来计算 gl.LUMINANCE_ALPHA
+      // 第四个参数format 纹理的内部格式 必须和internalformat相同
+      // 第五个参数 dataType 纹理数据的数据类型 gl.UNSIGNED_BYTE 无符号整型, gl.UNSIGNED_SHORT_5_6_5(RGB), gl.UNSIGNED_SHORT_4_4_4_4(RGBA), gl.UNSIGNED_SHORT_5_5_5_1(RGBA),
+      // 第六个参数 image对象
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+      // 给uSampler 赋值
+      gl.uniform1i(uSampler, 0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    };
+    img.src = './img/平移矩阵-01.png';
+  }
+</script>
+</html>

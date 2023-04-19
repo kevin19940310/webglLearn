@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>webgl</title>
+</head>
+<body onload="main()">
+  <canvas id="glcanvas">
+    你的浏览器似乎不支持或者禁用了 HTML5 <code>&lt;canvas&gt;</code> 元素。
+  </canvas>
+</body>
+<style>
+  body{
+    padding: 0;
+    margin: 0;
+  }
+  #glcanvas{
+    background-color: gray;
+  }
+  body::after{
+    content: '';
+    display: block;
+    width: 0.5px;
+    height: 100%;
+    background-color: red;
+    position: absolute;
+    top: 0;
+    left: 50%;
+  }
+  body::before{
+    content: '';
+    display: block;
+    width: 100%;
+    height: 0.5px;
+    background-color: red;
+    position: absolute;
+    top: 50%;
+    left: 0;
+  }
+</style>
+<script src="./lib/initShader.js"></script>
+<script>
+  function main() {
+    const canvas = document.querySelector("#glcanvas");
+    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+    // 初始化 WebGL 上下文
+    const gl = canvas.getContext("webgl");
+
+    // 创建着色器源码
+    // 顶点着色器
+    const VERTEX_SHADER_SOURCES = `
+      //attribute 只传递顶点数据
+      attribute vec4 aPosition;
+      attribute float aTranslation;
+      void main(){
+        gl_Position = vec4(aPosition.x + aTranslation, aPosition.y, aPosition.z, 1.0);
+        gl_PointSize = 5.0;
+      }
+    `;
+
+    // 片元着色器
+    const FRAGMENT_SHADER_SOURCES = `
+      precision mediump float;
+      uniform vec2 uColor;
+      void main(){
+        gl_FragColor = vec4(uColor.r,uColor.g,0.0,1.0);
+      }
+    `;
+    const program = initShader(gl, VERTEX_SHADER_SOURCES, FRAGMENT_SHADER_SOURCES);
+    // 获取 aPosition变量的内存地址
+    const aPosition = gl.getAttribLocation(program, 'aPosition');
+    const aTranslation = gl.getAttribLocation(program, 'aTranslation');
+
+    const points = new Float32Array([
+      -0.2, -0.2,
+      0.2, -0.2,
+      0.0, 0.5,
+    ])
+    // 创建缓冲区对象
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(aPosition,2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(aPosition);
+    let x = -1;
+    setInterval(() => {
+      x += 0.01
+      if(x > 1) {
+        x = -1;
+      }
+      gl.vertexAttrib1f(aTranslation, x);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }, 60);
+  }
+</script>
+</html>

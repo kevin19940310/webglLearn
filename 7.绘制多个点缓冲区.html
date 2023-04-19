@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>webgl</title>
+</head>
+<body onload="main()">
+  <canvas id="glcanvas">
+    你的浏览器似乎不支持或者禁用了 HTML5 <code>&lt;canvas&gt;</code> 元素。
+  </canvas>
+</body>
+<style>
+  body{
+    padding: 0;
+    margin: 0;
+  }
+  #glcanvas{
+    background-color: gray;
+  }
+  body::after{
+    content: '';
+    display: block;
+    width: 0.5px;
+    height: 100%;
+    background-color: red;
+    position: absolute;
+    top: 0;
+    left: 50%;
+  }
+  body::before{
+    content: '';
+    display: block;
+    width: 100%;
+    height: 0.5px;
+    background-color: red;
+    position: absolute;
+    top: 50%;
+    left: 0;
+  }
+</style>
+<script src="./lib/initShader.js"></script>
+<script>
+  function main() {
+    const canvas = document.querySelector("#glcanvas");
+    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+    // 初始化 WebGL 上下文
+    const gl = canvas.getContext("webgl");
+
+    // 创建着色器源码
+    // 顶点着色器
+    const VERTEX_SHADER_SOURCES = `
+      //attribute 只传递顶点数据
+      attribute vec4 aPosition;
+      void main(){
+        gl_Position = aPosition;
+        gl_PointSize =5.0;
+      }
+    `;
+
+    // 片元着色器
+    const FRAGMENT_SHADER_SOURCES = `
+      precision mediump float;
+      uniform vec2 uColor;
+      void main(){
+        gl_FragColor = vec4(uColor.r,uColor.g,0.0,1.0);
+      }
+    `;
+    const program = initShader(gl, VERTEX_SHADER_SOURCES, FRAGMENT_SHADER_SOURCES);
+    // 获取 aPosition变量的内存地址
+    const aPosition = gl.getAttribLocation(program, 'aPosition');
+    
+    // 获取uColor变量的存储地址
+    const uColor = gl.getUniformLocation(program, 'uColor');
+    // 创建顶点数据  Float32Array 类型化数组， 在webgl中需要大量相同类型的数据，引入类型化数组程序可以预知数据类型，提高性能
+    // Int32Array: 32位整型， UInt32Array:32位无符号整型，Float32Array：单精度32位浮点型，Float64Array：双精度64位浮点型
+    const points = new Float32Array([
+      0.5, -0.5,
+      0.0,0.5,
+      -0.5, -0.5,
+    ])
+    // 创建缓冲区对象
+    const buffer = gl.createBuffer();
+    // 绑定缓冲区对象到webgl上，gl.ARRAY_BUFFER 表示存储的顶点数据，gl.ELEMENT_ARRAY_BUFFER 表示存储的顶点的索引值
+    gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+    // 将顶点数据写入到缓冲区 gl.STATIC_DRAW 表示写入一次，多次绘制，gl.STREAM_DRAW表示写入一次绘制若干次，gl.DYNAMIC_DRAW 表示写入多次绘制多次
+    gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
+    // 给aPosition 赋值
+    // 参数：第一个 对象变量， 第二个 每个点需要用多少个数据， 第三个： 数据类型，需要和顶点数据保持一致
+    // 第四个 表示是否将数据归一化到[0,1],[-1,1]这个区间 第五个 表示两个相邻顶点之间的字节数 第六个 表示数据偏移量
+    // gl.FLOAT 浮点型 gl.UNSIGNED_BYTE 无符号字节 gl.SHORT 短整型 gl.UNSIGNED_SHORT 无符号短整型 gl.INT 整型 gl.UNSIGNED_INT 无符号整型
+    gl.vertexAttribPointer(aPosition,2, gl.FLOAT, false, 0, 0);
+    // 激活aPosition 变量  gl.disableVertexAttribArray(aPosition) 禁用变量
+    gl.enableVertexAttribArray(aPosition);
+    // gl.vertexAttrib2f(aPosition, 0.0, 0.0);
+    // gl.uniform2f(uColor, 0.0, 0.0)
+    gl.drawArrays(gl.POINTS, 0, 3);
+  }
+</script>
+</html>
