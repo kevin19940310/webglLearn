@@ -95,8 +95,9 @@
         eye = -0.1;
       }
       const vm = getViewMatrix(0.0, eye, 0.2, 0.0, 0.0, 0.0, 0.0, 0.6, 0.0);
+      const ortho = getOrtho(-1, 1, 1, -1, 0, 5);
       // 第一个参数 mat变量， 第二个参数 webgl中恒定为false， 第三个参数： 矩阵数组
-      gl.uniformMatrix4fv(mat, false, vm);
+      gl.uniformMatrix4fv(mat, false, mixMatrix(vm, ortho));
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       requestAnimationFrame(animation);
     }

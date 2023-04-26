@@ -1,25 +1,29 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>webgl</title>
 </head>
+
 <body onload="main()">
   <canvas id="glcanvas">
     你的浏览器似乎不支持或者禁用了 HTML5 <code>&lt;canvas&gt;</code> 元素。
   </canvas>
 </body>
 <style>
-  body{
+  body {
     padding: 0;
     margin: 0;
   }
-  #glcanvas{
+
+  #glcanvas {
     background-color: gray;
   }
-  body::after{
+
+  body::after {
     content: '';
     display: block;
     width: 0.5px;
@@ -29,7 +33,8 @@
     top: 0;
     left: 50%;
   }
-  body::before{
+
+  body::before {
     content: '';
     display: block;
     width: 100%;
@@ -73,7 +78,7 @@
     const aPosition = gl.getAttribLocation(program, 'aPosition');
     const mat = gl.getUniformLocation(program, 'mat');
 
-    function getTranslateMatrix( x = 0, y = 0, z = 0 ) {
+    function getTranslateMatrix(x = 0, y = 0, z = 0) {
       return new Float32Array([
         1.0, 0.0, 0.0, 0.0,
         0.0, 1.0, 0.0, 0.0,
@@ -89,23 +94,24 @@
     ])
     // 创建缓冲区对象
     const buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, points, gl.STATIC_DRAW);
-    gl.vertexAttribPointer(aPosition,2, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(aPosition);
     let x = -1.0;
     function animation() {
       x += 0.01
-      if(x> 1) {
+      if (x > 1) {
         x = -1.0;
       }
-      const matrix = getTranslateMatrix(x,x,x);
+      const matrix = getTranslateMatrix(x, x, x);
       // 第一个参数 mat变量， 第二个参数 webgl中恒定为false， 第三个参数： 矩阵数组
-      gl.uniformMatrix4fv(mat, false, matrix) ;
+      gl.uniformMatrix4fv(mat, false, matrix);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       requestAnimationFrame(animation)
     }
     animation();
   }
 </script>
+
 </html>
